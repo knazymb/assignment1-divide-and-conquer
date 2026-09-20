@@ -20,14 +20,14 @@ public class DeterministicSelector {
             throw new IllegalArgumentException("Invalid k");
         }
 
-        return select(array, 0, array.length - 1, k, 1);
+        return selectRange(array, 0, array.length - 1, k, 1);
     }
 
-    private int select(int[] array,
-                       int left,
-                       int right,
-                       int k,
-                       int depth) {
+    private int selectRange(int[] array,
+                            int left,
+                            int right,
+                            int k,
+                            int depth) {
 
         recursiveCalls++;
         maxRecursionDepth = Math.max(maxRecursionDepth, depth);
@@ -36,34 +36,52 @@ public class DeterministicSelector {
             return array[left];
         }
 
-        int pivotIndex = medianOfMedians(array, left, right);
-
-        pivotIndex = partition(
-                array,
-                left,
-                right,
-                pivotIndex
-        );
-
-        if (k == pivotIndex) {
+        if (right - left + 1 <= 5) {
+            insertionSort(array, left, right);
             return array[k];
         }
 
-        if (k < pivotIndex) {
-            return select(array, left, pivotIndex - 1, k, depth + 1);
+        int pivot = medianOfMedians(array, left, right, depth);
+
+        int[] equalRange = partition(
+                array,
+                left,
+                right,
+                pivot
+        );
+
+        int lessEnd = equalRange[0];
+        int greaterStart = equalRange[1];
+
+        if (k < lessEnd) {
+            return selectRange(
+                    array,
+                    left,
+                    lessEnd - 1,
+                    k,
+                    depth + 1
+            );
         }
 
-        return select(array, pivotIndex + 1, right, k, depth + 1);
+        if (k > greaterStart) {
+            return selectRange(
+                    array,
+                    greaterStart + 1,
+                    right,
+                    k,
+                    depth + 1
+            );
+        }
+
+        return array[k];
     }
 
-    private int medianOfMedians(int[] array, int left, int right) {
+    private int medianOfMedians(int[] array,
+                                int left,
+                                int right,
+                                int depth) {
 
         int size = right - left + 1;
-
-        if (size <= 5) {
-            insertionSort(array, left, right);
-            return left + size / 2;
-        }
 
         int numberOfGroups = (size + 4) / 5;
 
@@ -80,69 +98,52 @@ public class DeterministicSelector {
             swap(array, left + i, median);
         }
 
-        int medianOfMediansIndex =
-                left + numberOfGroups / 2;
+        int medianLeft = left;
+        int medianRight = left + numberOfGroups - 1;
+        int medianIndex = medianLeft + numberOfGroups / 2;
 
-        return select(
+        return selectRange(
                 array,
-                left,
-                left + numberOfGroups - 1,
-                medianOfMediansIndex,
-                1
-        ) == array[medianOfMediansIndex]
-                ? medianOfMediansIndex
-                : findIndex(
-                array,
-                left,
-                left + numberOfGroups - 1,
-                select(
-                        array,
-                        left,
-                        left + numberOfGroups - 1,
-                        medianOfMediansIndex,
-                        1
-                )
+                medianLeft,
+                medianRight,
+                medianIndex,
+                depth + 1
         );
     }
 
-    private int findIndex(int[] array,
-                          int left,
-                          int right,
-                          int value) {
+    private int[] partition(int[] array,
+                            int left,
+                            int right,
+                            int pivot) {
 
-        for (int i = left; i <= right; i++) {
-            if (array[i] == value) {
-                return i;
-            }
-        }
+        int less = left;
+        int current = left;
+        int greater = right;
 
-        return left;
-    }
-
-    private int partition(int[] array,
-                          int left,
-                          int right,
-                          int pivotIndex) {
-
-        int pivot = array[pivotIndex];
-
-        swap(array, pivotIndex, right);
-
-        int storeIndex = left;
-
-        for (int i = left; i < right; i++) {
+        while (current <= greater) {
 
             comparisons++;
 
-            if (array[i] < pivot) {
-                swap(array, i, storeIndex);
-                storeIndex++;
+            if (array[current] < pivot) {
+
+                swap(array, less, current);
+
+                less++;
+                current++;
+
+            } else if (array[current] > pivot) {
+
+                swap(array, current, greater);
+
+                greater--;
+
+            } else {
+
+                current++;
             }
         }
 
-        swap(array, storeIndex, right);
-
-        return storeIndex;
+        return new int[]{less, greater};
     }
 
     private void insertionSort(int[] array,

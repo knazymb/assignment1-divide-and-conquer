@@ -23,77 +23,98 @@ public class QuickSorter {
         quickSort(array, 0, array.length - 1, 1);
     }
 
-    private void quickSort(int[] array, int left, int right, int depth) {
+    private void quickSort(
+            int[] array,
+            int left,
+            int right,
+            int depth) {
 
         while (left < right) {
 
             recursiveCalls++;
-            maxRecursionDepth = Math.max(maxRecursionDepth, depth);
 
-            int pivotIndex = left + random.nextInt(right - left + 1);
+            maxRecursionDepth =
+                    Math.max(maxRecursionDepth, depth);
 
-            int newPivotIndex = partition(
-                    array,
-                    left,
-                    right,
-                    pivotIndex
-            );
+            int pivotIndex =
+                    left + random.nextInt(right - left + 1);
 
-            int leftSize = newPivotIndex - left;
-            int rightSize = right - newPivotIndex;
+            int pivot = array[pivotIndex];
+
+            int[] equalRange =
+                    partition(array, left, right, pivot);
+
+            int lessEnd = equalRange[0];
+            int greaterStart = equalRange[1];
+
+            int leftSize = lessEnd - left;
+            int rightSize = right - greaterStart;
 
             if (leftSize < rightSize) {
 
                 quickSort(
                         array,
                         left,
-                        newPivotIndex - 1,
+                        lessEnd - 1,
                         depth + 1
                 );
 
-                left = newPivotIndex + 1;
+                left = greaterStart + 1;
 
             } else {
 
                 quickSort(
                         array,
-                        newPivotIndex + 1,
+                        greaterStart + 1,
                         right,
                         depth + 1
                 );
 
-                right = newPivotIndex - 1;
+                right = lessEnd - 1;
             }
         }
     }
 
-    private int partition(int[] array,
-                          int left,
-                          int right,
-                          int pivotIndex) {
+    private int[] partition(
+            int[] array,
+            int left,
+            int right,
+            int pivot) {
 
-        int pivot = array[pivotIndex];
+        int less = left;
+        int current = left;
+        int greater = right;
 
-        swap(array, pivotIndex, right);
-
-        int storeIndex = left;
-
-        for (int i = left; i < right; i++) {
+        while (current <= greater) {
 
             comparisons++;
 
-            if (array[i] < pivot) {
-                swap(array, i, storeIndex);
-                storeIndex++;
+            if (array[current] < pivot) {
+
+                swap(array, less, current);
+
+                less++;
+                current++;
+
+            } else if (array[current] > pivot) {
+
+                swap(array, current, greater);
+
+                greater--;
+
+            } else {
+
+                current++;
             }
         }
 
-        swap(array, storeIndex, right);
-
-        return storeIndex;
+        return new int[]{less, greater};
     }
 
-    private void swap(int[] array, int i, int j) {
+    private void swap(
+            int[] array,
+            int i,
+            int j) {
 
         if (i == j) {
             return;
